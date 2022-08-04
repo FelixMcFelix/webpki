@@ -25,6 +25,7 @@ pub fn build_chain(
     cert: &Cert,
     time: time::Time,
     sub_ca_count: usize,
+    aux_data: Option<&[u8]>
 ) -> Result<(), Error> {
     let used_as_ca = used_as_ca(&cert.ee_or_ca);
 
@@ -69,7 +70,7 @@ pub fn build_chain(
 
         // TODO: check_distrust(trust_anchor_subject, trust_anchor_spki)?;
 
-        check_signatures(supported_sig_algs, cert, trust_anchor_spki)?;
+        check_signatures(supported_sig_algs, cert, trust_anchor_spki, aux_data)?;
 
         Ok(())
     }) {
@@ -124,6 +125,7 @@ pub fn build_chain(
             &potential_issuer,
             time,
             next_sub_ca_count,
+            aux_data,
         )
     })
 }
@@ -132,11 +134,12 @@ fn check_signatures(
     supported_sig_algs: &[&SignatureAlgorithm],
     cert_chain: &Cert,
     trust_anchor_key: untrusted::Input,
+    aux_data: Option<&[u8]>
 ) -> Result<(), Error> {
     let mut spki_value = trust_anchor_key;
     let mut cert = cert_chain;
     loop {
-        signed_data::verify_signed_data(supported_sig_algs, spki_value, &cert.signed_data)?;
+        signed_data::verify_signed_data(supported_sig_algs, spki_value, &cert.signed_data, aux_data)?;
 
         // TODO: check revocation
 

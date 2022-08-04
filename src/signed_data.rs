@@ -96,6 +96,7 @@ pub(crate) fn verify_signed_data(
     supported_algorithms: &[&SignatureAlgorithm],
     spki_value: untrusted::Input,
     signed_data: &SignedData,
+    aux_data: Option<&[u8]>,
 ) -> Result<(), Error> {
     // We need to verify the signature in `signed_data` using the public key
     // in `public_key`. In order to know which *ring* signature verification
@@ -126,6 +127,7 @@ pub(crate) fn verify_signed_data(
             spki_value,
             signed_data.data,
             signed_data.signature,
+            aux_data,
         ) {
             Err(Error::UnsupportedSignatureAlgorithmForPublicKey) => {
                 found_signature_alg_match = true;
@@ -149,6 +151,7 @@ pub(crate) fn verify_signature(
     spki_value: untrusted::Input,
     msg: untrusted::Input,
     signature: untrusted::Input,
+    aux_data: Option<&[u8]>
 ) -> Result<(), Error> {
     let spki = parse_spki_value(spki_value)?;
     if !signature_alg
@@ -161,7 +164,7 @@ pub(crate) fn verify_signature(
         signature_alg.verification_alg,
         spki.key_value.as_slice_less_safe(),
     )
-    .verify(msg.as_slice_less_safe(), signature.as_slice_less_safe())
+    .verify(&[msg.as_slice_less_safe(), aux_data.unwrap_or(&[])].concat(), signature.as_slice_less_safe())
     .map_err(|_| Error::InvalidSignatureForPublicKey)
 }
 

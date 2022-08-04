@@ -104,6 +104,29 @@ impl<'a> EndEntityCert<'a> {
             &self.inner,
             time,
             0,
+            None,
+        )
+    }
+
+    /// Verifies that the end-entity certificate is valid for use by a TLS
+    /// server, including shared-secret data in the signature body.
+    pub fn verify_is_valid_tls_server_cert_with_aux_data(
+        &self,
+        supported_sig_algs: &[&SignatureAlgorithm],
+        &TlsServerTrustAnchors(trust_anchors): &TlsServerTrustAnchors,
+        intermediate_certs: &[&[u8]],
+        time: Time,
+        aux_data: &[u8],
+    ) -> Result<(), Error> {
+        verify_cert::build_chain(
+            verify_cert::EKU_SERVER_AUTH,
+            supported_sig_algs,
+            trust_anchors,
+            intermediate_certs,
+            &self.inner,
+            time,
+            0,
+            Some(aux_data),
         )
     }
 
@@ -136,6 +159,29 @@ impl<'a> EndEntityCert<'a> {
             &self.inner,
             time,
             0,
+            None,
+        )
+    }
+
+    /// Verifies that the end-entity certificate is valid for use by a TLS
+    /// client, including shared-secret data in the signature body.
+    pub fn verify_is_valid_tls_client_cert_with_aux_data(
+        &self,
+        supported_sig_algs: &[&SignatureAlgorithm],
+        &TlsClientTrustAnchors(trust_anchors): &TlsClientTrustAnchors,
+        intermediate_certs: &[&[u8]],
+        time: Time,
+        aux_data: &[u8],
+    ) -> Result<(), Error> {
+        verify_cert::build_chain(
+            verify_cert::EKU_CLIENT_AUTH,
+            supported_sig_algs,
+            trust_anchors,
+            intermediate_certs,
+            &self.inner,
+            time,
+            0,
+            Some(aux_data),
         )
     }
 
@@ -201,6 +247,7 @@ impl<'a> EndEntityCert<'a> {
             self.inner.spki.value(),
             untrusted::Input::from(msg),
             untrusted::Input::from(signature),
+            None,
         )
     }
 }
